@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
+const cloudinary = require('./config/cloudinary');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -13,8 +15,32 @@ app.use((req, res, next) => {
   console.log(`[API Request] ${req.method} ${req.url}`);
   next();
 });
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174'
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, postman or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin.endsWith('.vercel.app') || 
+                      origin.startsWith('https://luxestate-'); // Support any custom frontend name
+                      
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -45,13 +71,37 @@ const { protect } = require('./middleware/auth');
 
 app.post('/api/upload', protect, (req, res, next) => {
   // Use upload middleware to parse multiple files
-  upload.array('images', 5)(req, res, (err) => {
+  upload.array('images', 5)(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ success: false, message: err.message });
     }
     try {
       const files = req.files || [];
-      const urls = files.map(file => `/uploads/${file.filename}`);
+      
+      // Upload each file to Cloudinary and clean up the local copy
+      const uploadPromises = files.map(async (file) => {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'luxestate'
+          });
+          
+          // Delete local file after successful upload
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+          
+          return result.secure_url;
+        } catch (uploadError) {
+          // Clean up the local file even if upload fails
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+          throw uploadError;
+        }
+      });
+
+      const urls = await Promise.all(uploadPromises);
+
       res.status(200).json({
         success: true,
         urls
