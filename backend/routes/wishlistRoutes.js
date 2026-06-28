@@ -55,8 +55,8 @@ router.post('/:propertyId', protect, async (req, res) => {
   }
 });
 
-// Remove from wishlist
-router.delete('/:propertyId', protect, async (req, res) => {
+// Remove from wishlist handler
+const removeFromWishlistHandler = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -80,6 +80,9 @@ router.delete('/:propertyId', protect, async (req, res) => {
       message: error.message
     });
   }
-});
+};
+
+router.delete('/:propertyId', protect, removeFromWishlistHandler);
+router.post('/:propertyId/remove', protect, removeFromWishlistHandler);
 
 module.exports = router;

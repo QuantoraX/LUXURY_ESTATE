@@ -78,7 +78,7 @@ export const bookingApi = {
 export const wishlistApi = {
   getWishlist: () => axiosInstance.get('/wishlist').then((response) => response.data),
   addToWishlist: (propertyId) => axiosInstance.post(`/wishlist/${propertyId}`).then((response) => response.data),
-  removeFromWishlist: (propertyId) => axiosInstance.delete(`/wishlist/${propertyId}`).then((response) => response.data),
+  removeFromWishlist: (propertyId) => axiosInstance.post(`/wishlist/${propertyId}/remove`).then((response) => response.data),
 }
 
 export const notificationApi = {
