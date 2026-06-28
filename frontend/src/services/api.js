@@ -29,6 +29,10 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error?.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+      window.localStorage.removeItem('luxestate-user');
+      window.location.reload();
+    }
     const message = error?.response?.data?.message || error.message || 'Something went wrong'
     return Promise.reject(new Error(message))
   }
@@ -74,6 +78,7 @@ export const bookingApi = {
 export const wishlistApi = {
   getWishlist: () => axiosInstance.get('/wishlist').then((response) => response.data),
   addToWishlist: (propertyId) => axiosInstance.post(`/wishlist/${propertyId}`).then((response) => response.data),
+  removeFromWishlist: (propertyId) => axiosInstance.delete(`/wishlist/${propertyId}`).then((response) => response.data),
 }
 
 export const notificationApi = {

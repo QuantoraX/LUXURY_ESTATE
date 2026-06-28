@@ -50,6 +50,7 @@ export const WishlistProvider = ({ children }) => {
         toast.success('Added to wishlist')
       }
     } catch (error) {
+      console.error('Failed to update wishlist:', error)
       toast.error('Failed to update wishlist')
     }
   }

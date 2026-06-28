@@ -12,7 +12,11 @@ const app = express();
 
 // Middleware
 app.use((req, res, next) => {
-  console.log(`[API Request] ${req.method} ${req.url}`);
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[API Response] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+  });
   next();
 });
 const allowedOrigins = [

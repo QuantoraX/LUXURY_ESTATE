@@ -47,6 +47,7 @@ router.post('/:propertyId', protect, async (req, res) => {
       message: 'Added to wishlist'
     });
   } catch (error) {
+    console.error('Error adding to wishlist:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -73,6 +74,7 @@ router.delete('/:propertyId', protect, async (req, res) => {
       message: 'Removed from wishlist'
     });
   } catch (error) {
+    console.error('Error removing from wishlist:', error);
     res.status(500).json({
       success: false,
       message: error.message
